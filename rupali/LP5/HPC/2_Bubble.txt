@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <ctime>
+#include <cstdlib>
+using namespace std;
+
+void parallelBubbleSort(vector<int>& arr) {
+    int n = arr.size();
+    for (int i = 0; i < n; i++) {
+        // Odd-even sorting logic (parallel-style)
+        for (int j = i % 2; j < n - 1; j += 2) {
+            if (arr[j] > arr[j + 1]) {
+                swap(arr[j], arr[j + 1]);
+            }
+        }
+    }
+}
+
+int main() {
+    int n;
+
+    // Taking input for the size of the array
+    cout << "Enter the number of elements: ";
+    cin >> n;
+
+    vector<int> arr(n);
+
+    // Taking input for the values in the array
+    cout << "Enter " << n << " elements: ";
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+
+    cout << "Original array: [";
+    for (int i = 0; i < min(10, n); i++) {
+        cout << arr[i] << " ";
+    }
+    if (n > 10) cout << "...";
+    cout << "]\n";
+
+    clock_t start = clock();
+    parallelBubbleSort(arr);
+    clock_t end = clock();
+
+    cout << "Sorted array: [";
+    for (int i = 0; i < min(10, n); i++) {
+        cout << arr[i] << " ";
+    }
+    if (n > 10) cout << "...";
+    cout << "]\n";
+
+    double time_taken = double(end - start) / CLOCKS_PER_SEC;
+    cout << "Execution time: " << time_taken << " seconds\n";
+
+    return 0;
+}

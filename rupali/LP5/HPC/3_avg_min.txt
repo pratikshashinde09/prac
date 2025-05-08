@@ -1,0 +1,45 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+
+void parallel_min_avg(int* data, int size, int* min_val, double* avg_val) {
+    int local_min = data[0];
+    long long sum = 0;
+
+    #pragma omp parallel for reduction(min:local_min) reduction(+:sum)
+    for (int i = 0; i < size; i++) {
+        if (data[i] < local_min)
+            local_min = data[i];
+        sum += data[i];
+    }
+
+    *min_val = local_min;
+    *avg_val = (double)sum / size;
+}
+
+int main() {
+    int data_size;
+
+    // Taking user input for the size of the data array
+    printf("Enter the number of elements: ");
+    scanf("%d", &data_size);
+
+    int* data = (int*)malloc(data_size * sizeof(int));
+
+    // Taking user input for the elements of the array
+    printf("Enter %d elements:\n", data_size);
+    for (int i = 0; i < data_size; i++) {
+        scanf("%d", &data[i]);
+    }
+
+    int min_val;
+    double avg_val;
+
+    parallel_min_avg(data, data_size, &min_val, &avg_val);
+
+    printf("Minimum value: %d\n", min_val);
+    printf("Average value: %.2lf\n", avg_val);
+
+    free(data);
+    return 0;
+}

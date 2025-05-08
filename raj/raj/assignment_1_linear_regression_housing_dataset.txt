@@ -1,0 +1,108 @@
+# Import Necessary libraries
+import tensorflow as tf
+import numpy as np
+from tensorflow.keras import layers, models
+from sklearn.datasets import fetch_california_housing
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+
+# Load Dataset -> Change dataset name here in case dataset is getting changed
+df=pd.read_csv("HousingData.csv")
+
+# Print Column names
+df.columns
+
+# Print sample of 5 rows
+df.sample(5)
+
+# Get column related information
+df.info()
+
+# Check and find count of null values in each column
+df.isnull().sum()
+
+# Check dimensions of the datasets as rows and columns
+df.shape
+
+# Fill the missing values in dataset
+df.fillna(df.mean(), inplace=True)
+
+# After filling missing values check if we have any null values remaining
+df.isnull().sum()
+
+# Again print the details of dataset as rows and columns
+df.shape
+
+# Draw correlation between multiple columns
+# That is two columns are highly co-related then the color will be darker
+# For columns which are less related there will be lighter color
+sns.heatmap(df.corr(),annot=True,square=True)
+
+# Get X and Y data for training
+# That is X now holds all columns except MEDV
+# Y holds only column MEDV
+# That we are training model to find Y using all the X columns
+X = df.drop(['MEDV'], axis = 1)
+y = df['MEDV']
+
+# Split training and testing data
+x_train,x_test,y_train,y_test = train_test_split(X,y,test_size=0.25,random_state=10)
+
+# Transform X data
+scaler = StandardScaler()
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test)
+
+# Print the X data dimensions that is rows and columns
+x_train.shape, x_test.shape
+
+# Import Sequential and Dense
+from keras.models import Sequential
+from keras.layers import Dense
+
+# Create Neural Network Model with three layers
+model = Sequential([
+    Dense(64, activation='relu', input_shape=(13,)), # -> Layer One
+    Dense(32, activation='relu'), # -> Layer two
+    Dense(1)  # -> Layer three
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+
+# Print model summary
+model.summary()
+
+# Train the model
+model.fit(x_train,y_train,epochs=50,batch_size=32,validation_split=0.05)
+
+# Here Epochs are basically how many number of times the
+# training data is iterated while training the model
+
+# Calculate LOSS using MSE and MAE
+loss,mae=model.evaluate(x_test,y_test,verbose=0)
+print(f"Mean Squared Error",loss)
+print(f"Mean Absolute Error", mae)
+
+# Use testing data to test the model
+predictions = model.predict(x_test)
+
+# Compute RMSE
+rmse = np.sqrt(mean_squared_error(y_test, predictions))
+print(f"RMSE: ",rmse)
+# Compute R² Score
+r2 = r2_score(y_test, predictions)
+print(f"R2 Score : ",r2)
+
+# Print the True and Predicted prices
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, predictions,alpha=0.5, edgecolors='k')
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color="red", linestyle="dashed")
+plt.xlabel("True Prices")
+plt.ylabel("Predicted Prices")
+plt.title("True Prices vs Predicted Prices")
+plt.show()

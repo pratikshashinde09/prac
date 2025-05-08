@@ -1,0 +1,46 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+
+int main() {
+    int vec_size;
+
+    // Input vector size
+    printf("Enter vector size: ");
+    scanf("%d", &vec_size);
+
+    float *a = (float*)malloc(vec_size * sizeof(float));
+    float *b = (float*)malloc(vec_size * sizeof(float));
+    float *c = (float*)malloc(vec_size * sizeof(float));
+
+    // Input elements of vector A
+    printf("Enter elements of vector A:\n");
+    for (int i = 0; i < vec_size; i++) {
+        scanf("%f", &a[i]);
+    }
+
+    // Input elements of vector B
+    printf("Enter elements of vector B:\n");
+    for (int i = 0; i < vec_size; i++) {
+        scanf("%f", &b[i]);
+    }
+
+    // Vector Addition using OpenMP
+    #pragma omp parallel for
+    for (int i = 0; i < vec_size; i++) {
+        c[i] = a[i] + b[i];
+    }
+
+    // Output result
+    printf("Vector Addition Result:\n");
+    for (int i = 0; i < vec_size; i++) {
+        printf("c[%d] = %f\n", i, c[i]);
+    }
+
+    // Free allocated memory
+    free(a);
+    free(b);
+    free(c);
+
+    return 0;
+}

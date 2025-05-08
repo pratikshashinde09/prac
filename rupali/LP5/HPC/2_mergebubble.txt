@@ -1,0 +1,126 @@
+#include <omp.h>
+#include <iostream>
+#include <string>
+#include <chrono>
+#include <vector>
+#include <algorithm>
+
+using namespace std::chrono;
+using namespace std;
+
+void displayArray(const string& message, const int nums[], size_t length) {
+    cout << "\t" << message << ": [";
+    for (size_t i = 0; i < length; i++) {
+        cout << nums[i];
+        if (i != length - 1)
+            cout << ", ";
+    }
+    cout << "]" << endl;
+}
+
+void merge(int nums[], int leftStart, int leftEnd, int rightStart, int rightEnd) {
+    const size_t n = rightEnd - leftStart + 1;
+    vector<int> tempArray(n);
+
+    size_t t = 0;
+    int l = leftStart;
+    int r = rightStart;
+
+    while (l <= leftEnd && r <= rightEnd) {
+        tempArray[t++] = (nums[l] <= nums[r]) ? nums[l++] : nums[r++];
+    }
+
+    while (l <= leftEnd) tempArray[t++] = nums[l++];
+    while (r <= rightEnd) tempArray[t++] = nums[r++];
+
+    copy(tempArray.begin(), tempArray.end(), nums + leftStart);
+}
+
+void mergeSort(int nums[], int start, int end) {
+    const int cutoff = 100;
+    
+    if (start < end) {
+        if (end - start < cutoff) {
+            sort(nums + start, nums + end + 1);
+            return;
+        }
+
+        int mid = start + (end - start) / 2;
+        
+        #pragma omp parallel sections num_threads(2)
+        {
+            #pragma omp section
+            mergeSort(nums, start, mid);
+            
+            #pragma omp section
+            mergeSort(nums, mid + 1, end);
+        }
+        merge(nums, start, mid, mid + 1, end);
+    }
+}
+
+void bubbleSort(int nums[], size_t length) {
+    bool swapped;
+    
+    for (size_t i = 0; i < length; i++) {
+        swapped = false;
+        int start = i % 2;
+        
+        #pragma omp parallel for reduction(||:swapped)
+        for (int j = start; j < static_cast<int>(length) - 1; j += 2) {
+            if (nums[j] > nums[j + 1]) {
+                swap(nums[j], nums[j + 1]);
+                swapped = true;
+            }
+        }
+        
+        if (!swapped) break;
+    }
+}
+
+void runPerformanceTest(size_t size) {
+    vector<int> nums1(size), nums2(size);
+    
+    srand(time(nullptr));
+    generate(nums1.begin(), nums1.end(), []() { return rand() % 10000; });
+    nums2 = nums1;
+
+    cout << "\nPerformance Test (size: " << size << "):" << endl;
+
+    auto start_bubble = high_resolution_clock::now();
+    bubbleSort(nums1.data(), size);
+    auto end_bubble = high_resolution_clock::now();
+    auto duration_bubble = duration_cast<milliseconds>(end_bubble - start_bubble);
+    cout << "Bubble Sort time: " << duration_bubble.count() << " ms" << endl;
+
+    auto start_merge = high_resolution_clock::now();
+    mergeSort(nums2.data(), 0, size - 1);
+    auto end_merge = high_resolution_clock::now();
+    auto duration_merge = duration_cast<milliseconds>(end_merge - start_merge);
+    cout << "Merge Sort time: " << duration_merge.count() << " ms" << endl;
+
+    cout << "Merge Sort was " << static_cast<double>(duration_bubble.count()) / duration_merge.count() 
+         << "x faster than Bubble Sort" << endl;
+}
+
+int main() {
+    // Original small arrays for demonstration
+    int nums1[] = {4, 6, 2, 0, 7, 6, 1, 9, -3, -5};
+    int nums2[] = {3, 5, 1, -1, 6, 5, 0, 8, -2, -4};
+    size_t length = sizeof(nums1) / sizeof(int);
+
+    cout << "Bubble Sort Demonstration:" << endl;
+    displayArray("Before", nums1, length);
+    bubbleSort(nums1, length);
+    displayArray("After", nums1, length);
+
+    cout << "\nMerge Sort Demonstration:" << endl;
+    displayArray("Before", nums2, length);
+    mergeSort(nums2, 0, length - 1);
+    displayArray("After", nums2, length);
+
+    // Performance test with larger array
+    runPerformanceTest(10000);
+
+    return 0;
+}

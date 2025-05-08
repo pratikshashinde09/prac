@@ -1,0 +1,53 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from keras.models import Sequential
+from keras.layers import Dense,SimpleRNN
+from sklearn.model_selection import train_test_split
+
+from sklearn.preprocessing import MinMaxScaler
+
+df=pd.read_csv('GOOGL.csv')
+
+df.head()
+
+df.isnull().sum()
+
+scaler=MinMaxScaler(feature_range=(0,1))
+
+df['Date']=pd.to_datetime(df['Date'])
+df.set_index('Date',inplace=True)
+data=df[['Close']]
+
+scaled_data = scaler.fit_transform(data)
+plt.plot(scaled_data)
+
+def create(time,scaled_data):
+    x,y=[],[]
+    for i in range(time,len(scaled_data)):
+        x.append(scaled_data[i-time:i,0])
+        y.append(scaled_data[i,0])
+    return np.asarray(x),np.asarray(y)
+x,y=create(60,scaled_data)
+x=x.reshape(x.shape[0],x.shape[1],1)
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,shuffle=False)
+
+model=Sequential()
+model.add(SimpleRNN(units=40, input_shape=(x_train.shape[1],1), return_sequences=True))
+model.add(SimpleRNN(units=20, return_sequences=True))
+model.add(SimpleRNN(units=10, return_sequences=False))
+model.add(Dense(units=1))
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+history=model.fit(x_train,y_train,epochs=10,batch_size=64,validation_data=(x_test,y_test))
+
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+
+y_predict=model.predict(x_test)
+
+y_predict=scaler.inverse_transform(y_predict)
+y_actual=scaler.inverse_transform(y_test.reshape(-1,1))
+plt.plot(y_predict)
+plt.plot(y_actual)
+

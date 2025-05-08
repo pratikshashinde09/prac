@@ -1,0 +1,45 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+
+void parallel_max_sum(int* data, int size, int* max_val, long long* sum_val) {
+    int local_max = data[0];
+    long long total_sum = 0;
+
+    #pragma omp parallel for reduction(max:local_max) reduction(+:total_sum)
+    for (int i = 0; i < size; i++) {
+        if (data[i] > local_max)
+            local_max = data[i];
+        total_sum += data[i];
+    }
+
+    *max_val = local_max;
+    *sum_val = total_sum;
+}
+
+int main() {
+    int data_size;
+
+    // Taking user input for the size of the data array
+    printf("Enter the number of elements: ");
+    scanf("%d", &data_size);
+
+    int* data = (int*)malloc(data_size * sizeof(int));
+
+    // Taking user input for the elements of the array
+    printf("Enter %d elements: \n", data_size);
+    for (int i = 0; i < data_size; i++) {
+        scanf("%d", &data[i]);
+    }
+
+    int max_val;
+    long long sum_val;
+
+    parallel_max_sum(data, data_size, &max_val, &sum_val);
+
+    printf("Maximum value: %d\n", max_val);
+    printf("Sum value: %lld\n", sum_val);
+
+    free(data);
+    return 0;
+}

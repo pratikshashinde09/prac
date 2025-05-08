@@ -1,0 +1,79 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <omp.h>
+
+int main() {
+    int vec_size, mat_size;
+
+    // Input for vector size
+    printf("Enter vector size: ");
+    scanf("%d", &vec_size);
+
+    float *a = (float*)malloc(vec_size * sizeof(float));
+    float *b = (float*)malloc(vec_size * sizeof(float));
+    float *c = (float*)malloc(vec_size * sizeof(float));
+
+    // Input elements for vector A
+    printf("Enter elements of vector A:\n");
+    for (int i = 0; i < vec_size; i++) scanf("%f", &a[i]);
+
+    // Input elements for vector B
+    printf("Enter elements of vector B:\n");
+    for (int i = 0; i < vec_size; i++) scanf("%f", &b[i]);
+
+    // Vector addition using OpenMP parallelism
+    #pragma omp parallel for
+    for (int i = 0; i < vec_size; i++) c[i] = a[i] + b[i];
+
+    // Output the result of vector addition
+    printf("Vector Addition Result:\n");
+    for (int i = 0; i < vec_size; i++) {
+        printf("c[%d] = %f\n", i, c[i]);
+    }
+    printf("\n");
+
+    // Free memory for vectors
+    free(a); free(b); free(c);
+
+    // Input for matrix size
+    printf("Enter matrix size (N for NxN): ");
+    scanf("%d", &mat_size);
+
+    int N = mat_size;
+    float *m1 = (float*)malloc(N * N * sizeof(float));
+    float *m2 = (float*)malloc(N * N * sizeof(float));
+    float *res = (float*)malloc(N * N * sizeof(float));
+
+    // Input elements for matrix A (m1)
+    printf("Enter elements of matrix A (%d x %d):\n", N, N);
+    for (int i = 0; i < N * N; i++) scanf("%f", &m1[i]);
+
+    // Input elements for matrix B (m2)
+    printf("Enter elements of matrix B (%d x %d):\n", N, N);
+    for (int i = 0; i < N * N; i++) scanf("%f", &m2[i]);
+
+    // Matrix multiplication using OpenMP parallelism
+    #pragma omp parallel for collapse(2)
+    for (int row = 0; row < N; row++) {
+        for (int col = 0; col < N; col++) {
+            float sum = 0.0f;
+            for (int k = 0; k < N; k++) {
+                sum += m1[row * N + k] * m2[k * N + col];
+            }
+            res[row * N + col] = sum;
+        }
+    }
+
+    // Output the result of matrix multiplication
+    printf("Matrix Multiplication Result:\n");
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            printf("res[%d][%d] = %f\n", i, j, res[i * N + j]);
+        }
+    }
+    printf("\n");
+
+    // Free memory for matrices
+    free(m1); free(m2); free(res);
+    return 0;
+}
